@@ -1,5 +1,3 @@
-from django.http import JsonResponse
-from rest_framework.authentication import TokenAuthentication
 from .models import BearerAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
@@ -8,6 +6,7 @@ from rest_framework import status
 from rest_framework import permissions
 from django.contrib.auth import get_user_model
 from rest_framework.authtoken.models import Token
+from django.contrib.auth import logout
 from rest_framework import parsers, renderers
 from .serializers import AuthTokenSerializer, RegisterSerializer
 
@@ -23,7 +22,7 @@ class HelloView(APIView):
     permission_classes = (IsAuthenticated,)
 
     def get(self, request):
-        return JsonResponse({'Hello': 'View'})
+        return Response({'Hello': 'View'})
 
 
 class RegisterView(APIView):
@@ -79,11 +78,18 @@ class ObtainAuthToken(APIView):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
-        token = Token.objects.get(user=user)
+        # token = Token.objects.get(user=user)
         # in case need to create token during logging in
-        # token, created = Token.objects.get_or_create(user=user)
+        token, created = Token.objects.get_or_create(user=user)
         return Response(
             {'token': token.key,
              'email': user.email,
              'first_name': user.first_name,
              'last_name': user.last_name})
+
+
+class LogOut(APIView):
+    def get(self, request):
+        request.user.auth_token.delete()
+        logout(request)
+        return Response({'logout': 'User Logged out successfully'})
