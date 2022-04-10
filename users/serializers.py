@@ -23,6 +23,7 @@ class AuthTokenSerializer(serializers.Serializer):
         password = data.get('password')
 
         if email and password:
+
             user = authenticate(email=email, password=password)
 
             if user:
@@ -30,7 +31,10 @@ class AuthTokenSerializer(serializers.Serializer):
                     msg = _('User account is disabled.')
                     raise serializers.ValidationError({'inactive account': msg})
             else:
-                msg = _('Unable to log in with provided credentials.')
+                # if email not in User.objects.filter(email=email):
+                #     msg = 'wrong email'
+                #     raise serializers.ValidationError({'wrong_credentials': msg})
+                msg = _('Unable to log in with provided credentials. Check email or password')
                 raise serializers.ValidationError({'wrong_credentials': msg})
         else:
             msg = _('Must include "email" and "password".')
@@ -38,3 +42,13 @@ class AuthTokenSerializer(serializers.Serializer):
 
         data['user'] = user
         return data
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    class Meta:
+        model = User
+        """
+            Serializer for password change endpoint.
+            """
+        old_password = serializers.CharField(required=True)
+        new_password = serializers.CharField(required=True)
